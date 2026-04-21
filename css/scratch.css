@@ -1,0 +1,221 @@
+/* ===== GLOBAL ===== */
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", serif;
+  background-color: #0b1f2a;
+  color: #e6f7ff;
+  line-height: 1.7;
+}
+
+/* ===== HERO HEADER ===== */
+.hero {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  background-image: url("../assets/img/dnd.jpg");
+  background-size: cover;
+  background-position: center 45%;
+  background-repeat: no-repeat;
+
+  position: relative;
+  padding: 40px 20px;
+}
+
+/* Dark overlay */
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 15, 25, 0.72);
+}
+
+/* Content wrapper */
+.hero-overlay {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Title */
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  color: #e6f7ff;
+  text-shadow: 0 0 15px rgba(95, 211, 255, 0.5);
+  line-height: 1.1;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  max-width: 850px;
+  margin: 20px auto 30px;
+  color: #f3f8fb;
+  line-height: 1.6;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+}
+
+/* ===== NAV BUTTONS ===== */
+.top-nav {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  max-width: 900px;
+  margin: 10px auto 0;
+}
+
+.top-nav a {
+  text-decoration: none;
+  background-color: #1e6f8c;
+  color: #e6f7ff;
+  padding: 12px 18px;
+  border-radius: 8px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.top-nav a:hover {
+  background-color: #5fd3ff;
+  color: #0b1f2a;
+}
+
+/* ===== MAIN CONTENT ===== */
+.container {
+  width: 90%;
+  max-width: 1100px;
+  margin: 40px auto;
+}
+
+/* ===== CARD SECTIONS ===== */
+.card {
+  background: rgba(19, 47, 63, 0.9);
+  border: 1px solid rgba(95, 211, 255, 0.2);
+  border-radius: 14px;
+  padding: 25px;
+  margin-bottom: 25px;
+}
+
+.card h2 {
+  color: #9edfff;
+  margin-top: 0;
+  border-bottom: 1px solid rgba(95, 211, 255, 0.3);
+  padding-bottom: 8px;
+}
+
+.card h3 {
+  color: #e6f7ff;
+}
+
+/* ===== LISTS ===== */
+.main-list {
+  padding-left: 20px;
+}
+
+.main-list li {
+  margin-bottom: 12px;
+}
+
+/* ===== GRID ===== */
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  margin-top: 15px;
+}
+
+.info-box {
+  background: rgba(10, 25, 40, 0.9);
+  padding: 15px;
+  border-radius: 10px;
+}
+
+/* ===== IMAGE ===== */
+.feature-image {
+  width: 100%;
+  max-width: 700px;
+  display: block;
+  margin: 20px auto;
+  border-radius: 10px;
+}
+
+/* ===== VIDEO ===== */
+.video-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 800px;
+  margin: 20px auto;
+  padding-bottom: 56.25%;
+  height: 0;
+}
+
+.video-wrapper iframe {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* ===== TABLEAU ===== */
+.tableau-placeholder {
+  margin-top: 20px;
+  overflow-x: auto;
+}
+
+/* ===== BUTTON LINKS ===== */
+.button-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.button-link {
+  text-decoration: none;
+  background-color: #1e6f8c;
+  color: #e6f7ff;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+.button-link:hover {
+  background-color: #5fd3ff;
+  color: #0b1f2a;
+}
+
+/* ===== LINKS ===== */
+a {
+  color: #9edfff;
+}
+
+a:hover {
+  color: #ffffff;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  .hero {
+    min-height: 65vh;
+    background-position: center 50%;
+  }
+
+  .hero h1 {
+    font-size: 2.2rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+  }
+}

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>D&D Backdrop Builder</title>
+  <link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+  <div class="app" id="app">
+    <div class="sidebar" id="sidebar">
+      <h1>D&D Builder</h1>
+
+      <div class="section">
+        <button class="section-toggle" onclick="toggleSection('backdropsSection')">Backdrops</button>
+        <div class="section-content collapsed" id="backdropsSection">
+          <button onclick="setMap('forest')">Forest</button>
+          <button onclick="setMap('snow')">Snow</button>
+          <button onclick="setMap('tavern')">Tavern</button>
+          <button onclick="setMap('desert')">Desert</button>
+          <button onclick="setMap('dungeon')">Dungeon</button>
+          <button onclick="setMap('vault')">Treasure</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <button class="section-toggle" onclick="toggleSection('objectsSection')">Objects</button>
+        <div class="section-content collapsed" id="objectsSection">
+          <button onclick="addItem('rockobj-removebg-preview.png', 'object')">Rock</button>
+          <button onclick="addItem('bushobj-removebg-preview.png', 'object')">Bush</button>
+          <button onclick="addItem('chestobj-removebg-preview.png', 'object')">Chest</button>
+          <button onclick="addItem('pondobj-removebg-preview.png', 'object')">Water</button>
+          <button onclick="addItem('treeobj.png', 'tree')">Tree</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <button class="section-toggle" onclick="toggleSection('toolsSection')">Tools</button>
+        <div class="section-content collapsed" id="toolsSection">
+          <button onclick="toggleGrid()">Toggle Grid</button>
+          <button onclick="clearBoard()">Clear Board</button>
+          <button onclick="openPlayer()">Open Player View</button>
+          <button onclick="goBack()">Back to Guide</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <button class="section-toggle" onclick="toggleSection('sizeSection')">Size</button>
+        <div class="section-content collapsed" id="sizeSection">
+          <label for="sizeSlider" class="slider-label">Selected Object Size</label>
+          <input type="range" id="sizeSlider" min="0.5" max="2.5" step="0.1" value="1" />
+        </div>
+      </div>
+    </div>
+
+    <div class="board-area">
+      <div class="board-shell" id="boardShell">
+        <div class="board" id="board">
+          <div class="grid" id="grid"></div>
+          <button id="fullscreenBtn" class="fullscreen-btn">Fullscreen</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="trash-zone" id="trashZone">Drag Here to Delete</div>
+
+  <script>
+    const board = document.getElementById("board");
+    const grid = document.getElementById("grid");
+    const sidebar = document.getElementById("sidebar");
+    const trashZone = document.getElementById("trashZone");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const slider = document.getElementById("sizeSlider");
+
+    const isPlayerView = new URLSearchParams(window.location.search).get("player") === "1";
+    const STORAGE_KEY = "dnd_builder_state_v6";
+
+    let selectedItemId = null;
+
+    const mapSettings = {
+      forest: {
+        image: "assets/img/forest.png",
+        size: "cover",
+        position: "center",
+        repeat: "no-repeat"
+      },
+      snow: {
+        image: "assets/img/snow.png",
+        size: "cover",
+        position: "center",
+        repeat: "no-repeat"
+      },
+      tavern: {
+        image: "assets/img/tavern.png",
+        size: "cover",
+        position: "center",
+        repeat: "no-repeat"
+      },
+      desert: {
+        image: "assets/img/desert.png",
+        size: "cover",
+        position: "center",
+        repeat: "no-repeat"
+      },
+      dungeon: {
+        image: "assets/img/dungeon.png",
+        size: "cover",
+        position: "center",
+        repeat: "no-repeat"
+      },
+      vault: {
+        image: "assets/img/vault.png",
+        size: "105%",
+        position: "center",
+        repeat: "no-repeat"
+      }
+    };
+
+    let state = {
+      currentMap: "dungeon",
+      gridOn: true,
+      items: []
+    };
+
+    function saveState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        try {
+          state = JSON.parse(saved);
+        } catch (e) {
+          console.error("Could not parse saved state.", e);
+        }
+      }
+    }
+
+    function applyMap() {
+      const settings = mapSettings[state.currentMap];
+      if (!settings) return;
+
+      board.style.backgroundImage = `url("${settings.image}")`;
+      board.style.backgroundSize = settings.size;
+      board.style.backgroundPosition = settings.position;
+      board.style.backgroundRepeat = settings.repeat;
+      board.style.backgroundColor = "#111";
+    }
+
+    function applyGrid() {
+      grid.classList.toggle("show", state.gridOn);
+    }
+
+    function renderItems() {
+      board.querySelectorAll(".board-item").forEach(el => el.remove());
+
+      state.items.forEach(item => {
+        const img = document.createElement("img");
+        img.src = "assets/img/" + item.file;
+        img.className = `board-item ${item.kind}`;
+        if (item.id === selectedItemId && !isPlayerView) {
+          img.classList.add("selected");
+        }
+
+        img.dataset.id = item.id;
+        img.style.left = item.x + "px";
+        img.style.top = item.y + "px";
+        img.draggable = false;
+
+        const baseSizes = {
+          tree: 110,
+          object: 80
+        };
+
+        const base = baseSizes[item.kind] || 80;
+        img.style.width = base * item.scale + "px";
+        img.style.height = base * item.scale + "px";
+
+        board.appendChild(img);
+
+        if (!isPlayerView) {
+          img.addEventListener("click", (e) => {
+            e.stopPropagation();
+            selectedItemId = item.id;
+            updateSlider();
+            renderAll();
+          });
+
+          makeDraggable(img);
+        }
+      });
+    }
+
+    function renderAll() {
+      applyMap();
+      applyGrid();
+      renderItems();
+    }
+
+    function setMap(type) {
+      state.currentMap = type;
+      saveState();
+      renderAll();
+    }
+
+    function addItem(file, kind) {
+      const sizeMap = {
+        tree: 110,
+        object: 80
+      };
+
+      const baseSize = sizeMap[kind] || 80;
+
+      const item = {
+        id: crypto.randomUUID(),
+        file,
+        kind,
+        x: Math.max(20, board.clientWidth / 2 - baseSize / 2),
+        y: Math.max(20, board.clientHeight / 2 - baseSize / 2),
+        scale: 1
+      };
+
+      state.items.push(item);
+      selectedItemId = item.id;
+      saveState();
+      updateSlider();
+      renderAll();
+    }
+
+    function clearBoard() {
+      state.items = [];
+      selectedItemId = null;
+      saveState();
+      updateSlider();
+      renderAll();
+    }
+
+    function toggleGrid() {
+      state.gridOn = !state.gridOn;
+      saveState();
+      renderAll();
+    }
+
+    function openPlayer() {
+      window.open(window.location.pathname + "?player=1", "playerView");
+    }
+
+    function goBack() {
+      window.location.href = "scratch.html";
+    }
+
+    function toggleSection(id) {
+      document.getElementById(id).classList.toggle("collapsed");
+    }
+
+    function removeItemById(id) {
+      state.items = state.items.filter(item => item.id !== id);
+      if (selectedItemId === id) {
+        selectedItemId = null;
+      }
+      saveState();
+      updateSlider();
+      renderAll();
+    }
+
+    function updateSlider() {
+      const item = state.items.find(i => i.id === selectedItemId);
+      if (item) {
+        slider.value = item.scale;
+        slider.disabled = false;
+      } else {
+        slider.value = 1;
+        slider.disabled = true;
+      }
+    }
+
+    slider.addEventListener("input", () => {
+      if (!selectedItemId) return;
+
+      const item = state.items.find(i => i.id === selectedItemId);
+      if (!item) return;
+
+      item.scale = parseFloat(slider.value);
+      saveState();
+      renderAll();
+    });
+
+    function makeDraggable(el) {
+      let dragging = false;
+      let shiftX = 0;
+      let shiftY = 0;
+
+      el.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        dragging = true;
+
+        const rect = el.getBoundingClientRect();
+        shiftX = e.clientX - rect.left;
+        shiftY = e.clientY - rect.top;
+
+        el.style.zIndex = "1000";
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
+      function onMouseMove(e) {
+        if (!dragging) return;
+
+        const boardRect = board.getBoundingClientRect();
+
+        let newLeft = e.clientX - boardRect.left - shiftX;
+        let newTop = e.clientY - boardRect.top - shiftY;
+
+        const maxLeft = board.clientWidth - el.offsetWidth;
+        const maxTop = board.clientHeight - el.offsetHeight;
+
+        newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+        newTop = Math.max(0, Math.min(newTop, maxTop));
+
+        el.style.left = newLeft + "px";
+        el.style.top = newTop + "px";
+
+        const trashRect = trashZone.getBoundingClientRect();
+        const overTrash =
+          e.clientX >= trashRect.left &&
+          e.clientX <= trashRect.right &&
+          e.clientY >= trashRect.top &&
+          e.clientY <= trashRect.bottom;
+
+        trashZone.classList.toggle("active", overTrash);
+      }
+
+      function onMouseUp(e) {
+        dragging = false;
+        el.style.zIndex = "";
+
+        const trashRect = trashZone.getBoundingClientRect();
+        const overTrash =
+          e.clientX >= trashRect.left &&
+          e.clientX <= trashRect.right &&
+          e.clientY >= trashRect.top &&
+          e.clientY <= trashRect.bottom;
+
+        if (overTrash) {
+          trashZone.classList.remove("active");
+          removeItemById(el.dataset.id);
+        } else {
+          const item = state.items.find(i => i.id === el.dataset.id);
+          if (item) {
+            item.x = parseFloat(el.style.left);
+            item.y = parseFloat(el.style.top);
+            saveState();
+          }
+          trashZone.classList.remove("active");
+        }
+
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+      }
+    }
+
+    board.addEventListener("click", () => {
+      if (!isPlayerView) {
+        selectedItemId = null;
+        updateSlider();
+        renderAll();
+      }
+    });
+
+    window.addEventListener("storage", (e) => {
+      if (e.key === STORAGE_KEY) {
+        loadState();
+        renderAll();
+      }
+    });
+
+    if (isPlayerView) {
+      sidebar.style.display = "none";
+      trashZone.style.display = "none";
+      document.body.classList.add("player-view");
+      fullscreenBtn.style.display = "block";
+    } else {
+      fullscreenBtn.style.display = "none";
+    }
+
+    fullscreenBtn.addEventListener("click", async () => {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      }
+    });
+
+    document.addEventListener("fullscreenchange", () => {
+      if (document.fullscreenElement) {
+        fullscreenBtn.style.display = "none";
+      } else if (isPlayerView) {
+        fullscreenBtn.style.display = "block";
+      }
+    });
+
+    loadState();
+    updateSlider();
+    renderAll();
+  </script>
+</body>
+</html>
